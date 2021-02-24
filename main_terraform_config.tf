@@ -189,3 +189,35 @@ output "instance_private_ip" {
   value = aws_instance.com_1.private_ip
 }
 
+ #--- Create AWS EKS Cluster ----
+
+data "aws_eks_cluster" "cluster" {
+  name = module.cicd_cluster.cluster_id
+}
+
+data "aws_eks_cluster_auth" "cluster" {
+  name = module.cicd_cluster.cluster_id
+}
+
+provider "kubernetes" {
+  host                   = data.aws_eks_cluster.cluster.endpoint
+  cluster_ca_certificate = base64decode(data.aws_eks_cluster.cluster.certificate_authority.0.data)
+  token                  = data.aws_eks_cluster_auth.cluster.token
+  load_config_file       = false
+  version                = "~> 1.9"
+}
+
+module "cicd_cluster" {
+  source          = "terraform-aws-modules/eks/aws"
+  cluster_name    = "cicd_cluster"
+  cluster_version = "1.17"
+  subnets         = ["cicd_vpc-publicSubn"]
+  vpc_id          = "cicd_vpc"
+
+  worker_groups = [
+    {
+      instance_type = "m4.large"
+      asg_max_size  = 5
+    }
+  ]
+}

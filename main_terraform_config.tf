@@ -216,7 +216,7 @@ module "cicd_cluster" {
 
   worker_groups = [
     {
-      instance_type = "m4.large"
+      instance_type = "t2.micro"
       asg_max_size  = 5
     }
   ]
